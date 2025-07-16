@@ -6,6 +6,7 @@ import com.example.musicplatform.Services.S3Service;
 import com.example.musicplatform.Services.SongService;
 import lombok.AllArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -76,7 +77,6 @@ public class SongController {
     }
 
 
-
     @GetMapping("/{id}")
     public ResponseEntity<?> getSongById(@PathVariable String id) {
         return songService.getSongById(id)
@@ -86,9 +86,14 @@ public class SongController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSong(@PathVariable String id) {
-        songService.deleteSong(id);
-        return ResponseEntity.noContent().build();
+        try {
+            songService.deleteSong(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            // Log the error and maybe return 500 or 400 with message
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
-
 }
+
 

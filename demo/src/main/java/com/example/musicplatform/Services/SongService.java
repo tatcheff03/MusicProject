@@ -1,16 +1,16 @@
 package com.example.musicplatform.Services;
 
 import com.example.musicplatform.Data.Song;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.musicplatform.repo.SongRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Date;
+
 
 @Service
 public class SongService {
@@ -49,6 +49,7 @@ public class SongService {
         return songRepository.findAll();
     }
 
+    @Transactional
     public Optional<Song> updateSongMetadata(String id, Song updatedSong) {
         return songRepository.findById(id).map(existingSong -> {
             if (updatedSong.getTitle() != null) existingSong.setTitle(updatedSong.getTitle());
@@ -62,6 +63,7 @@ public class SongService {
         });
     }
 
+    @Transactional
     public Optional<Song> updateSongWithFiles(String id, Song updatedSong, MultipartFile file, MultipartFile coverArt) throws IOException {
         return songRepository.findById(id).map(existingSong -> {
 
@@ -124,13 +126,25 @@ public class SongService {
     }
 
 
-
     public Optional<Song> getSongById(String id) {
         return songRepository.findById(id);
     }
 
+    @Transactional
     public void deleteSong(String id) {
-        songRepository.deleteById(id);
-
+        songRepository.findById(id).ifPresent(song -> {
+            try {
+                if (song.getS3Url() != null && !song.getS3Url().isEmpty()) {
+                    s3Service.deleteFile(song.getS3Url());
+                }
+                if (song.getCoverArtUrl() != null && !song.getCoverArtUrl().isEmpty()) {
+                    s3Service.deleteFile(song.getCoverArtUrl());
+                }
+            } catch (Exception e) {
+                // Log the exception but proceed to delete DB record
+                System.err.println("Failed to delete files from S3: " + e.getMessage());
+            }
+            songRepository.deleteById(id);
+        });
     }
 }
