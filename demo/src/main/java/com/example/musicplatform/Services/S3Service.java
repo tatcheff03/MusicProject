@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
@@ -37,6 +38,13 @@ public class S3Service {
         return key;
     }
 
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot >= 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot);
+        }
+        return ""; // or throw an exception if you prefer
+    }
     public String uploadCoverArt(MultipartFile file) throws IOException {
         String key = "covers/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
         PutObjectRequest request = PutObjectRequest.builder()
@@ -77,6 +85,29 @@ public class S3Service {
         s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
         return key;
     }
+
+    public void copyFile(String sourceKey, String destKey) {
+        CopyObjectRequest copyReq = CopyObjectRequest.builder()
+                .bucket(bucketName)
+                .copySource(bucketName + "/" + sourceKey)
+                .key(destKey)
+                .build();
+
+        s3Client.copyObject(copyReq);
+
+    }
+
+    public String uploadFileToKey(MultipartFile file, String key) throws IOException {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(file.getContentType())
+                .build();
+        s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
+        return key;
+    }
+
+
 
 
 }
