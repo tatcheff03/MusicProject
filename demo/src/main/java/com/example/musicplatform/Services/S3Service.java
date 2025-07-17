@@ -1,5 +1,7 @@
 package com.example.musicplatform.Services;
 
+import com.example.musicplatform.Data.Artist;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
@@ -50,6 +53,29 @@ public class S3Service {
                 .key(key)
                 .build();
         s3Client.deleteObject(request);
+    }
+
+
+    public void uploadArtistMetadataJson(Artist artist) throws IOException {
+        String key = "artist-profiles/" + artist.getId() + ".json";
+        String json = new ObjectMapper().writeValueAsString(artist);
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType("application/json")
+                .build();
+        s3Client.putObject(request, RequestBody.fromBytes(json.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    public String uploadArtistProfilePhoto(MultipartFile file) throws IOException {
+        String key = "artist-profiles/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .contentType(file.getContentType())
+                .build();
+        s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
+        return key;
     }
 
 
