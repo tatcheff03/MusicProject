@@ -1,12 +1,10 @@
 package com.example.musicplatform.Services;
 
 import com.example.musicplatform.Data.Playlist;
-import com.example.musicplatform.Data.Song;
 import com.example.musicplatform.repo.PlaylistRepository;
 import com.example.musicplatform.repo.SongRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
